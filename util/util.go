@@ -9,10 +9,12 @@ import (
 
 	"github.com/thecajuncoder/ciphersuite/cipher"
 	"github.com/thecajuncoder/ciphersuite/cipher/caesar"
+	"github.com/thecajuncoder/ciphersuite/cipher/vigenere"
 )
 
 var validCipherTypes = map[string]reflect.Type{
-	"caesar": reflect.TypeOf(caesar.Cipher{}),
+	"caesar":   reflect.TypeOf(caesar.Cipher{}),
+	"vigenere": reflect.TypeOf(vigenere.Cipher{}),
 }
 
 // GetCipherFromName returns the matching cipher using the provided cipher name

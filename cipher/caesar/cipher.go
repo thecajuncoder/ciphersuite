@@ -1,15 +1,20 @@
 package caesar
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"strconv"
 
 	"github.com/thecajuncoder/ciphersuite/cipher"
+	"github.com/thecajuncoder/ciphersuite/runeops"
 )
 
+// messageOperation defines either an encode or decode message operation to perform on a single letter in a message
+type messageOperation func(r rune) rune
+
 // Cipher a struct that the defines the popular Caesar Cipher.
+// This cipher scrambles an input message by "shifting" all of the letters of the alphabet by a certain amount.
+// The message can then be decoded by shifting the letters back, or shifting by a negative number.
 // For more information on the Caesar Cipher, visit: https://en.wikipedia.org/wiki/Caesar_cipher
 type Cipher struct {
 	offset int
@@ -34,28 +39,9 @@ func (me *Cipher) SetKey(key cipher.Key) error {
 // Returns the number of bytes read (and written) and any IO errors that may have occurred
 func (me *Cipher) Encode(r io.Reader, w io.Writer) (int, error) {
 
-	br := bufio.NewReader(r)
-	bw := bufio.NewWriter(w)
-
-	defer bw.Flush()
-
-	bytesRead := 0
-	var c rune
-	var sz int
-	var err error
-
-	for c, sz, err = br.ReadRune(); err == nil; c, sz, err = br.ReadRune() {
-
-		bytesRead += sz
-
-		// Shift the letters to encode the message
-		bw.WriteRune(shiftRune(c, me.offset))
-	}
-
-	if err == io.EOF {
-		return bytesRead, nil
-	}
-	return bytesRead, err
+	return runeops.ReadAllRunes(r, w, func(r rune) (rune, error) {
+		return runeops.ShiftRune(r, me.offset), nil
+	})
 }
 
 // Decode decode the contents of the incoming reader stream
@@ -63,48 +49,7 @@ func (me *Cipher) Encode(r io.Reader, w io.Writer) (int, error) {
 // Returns the number of bytes read (and written) and any IO errors that may have occurred
 func (me *Cipher) Decode(r io.Reader, w io.Writer) (int, error) {
 
-	br := bufio.NewReader(r)
-	bw := bufio.NewWriter(w)
-
-	defer bw.Flush()
-
-	bytesRead := 0
-	var c rune
-	var sz int
-	var err error
-
-	for c, sz, err = br.ReadRune(); err == nil; c, sz, err = br.ReadRune() {
-
-		bytesRead += sz
-
-		// Apply a negative offset to decode the encoded message
-		bw.WriteRune(shiftRune(c, -me.offset))
-	}
-
-	if err == io.EOF {
-		return bytesRead, nil
-	}
-	return bytesRead, err
-}
-
-// shiftRune performs the "shift" for any English letters based on the provided offset
-// Letters that "overflow" when shifted are wrapped around to the other side of the alphabet
-func shiftRune(r rune, offset int) rune {
-
-	offset %= 26
-	ascii := int(r)
-
-	// Check only for capital or lowercase English letters (A - Z)
-	if (ascii >= 65 && ascii <= 90) || (ascii >= 97 && ascii <= 122) {
-
-		if ascii <= 90 && ascii+offset > 90 || ascii+offset > 122 {
-			ascii += offset - 26
-		} else if (ascii <= 90 && ascii+offset < 65) || (ascii >= 97 && ascii+offset < 97) {
-			ascii += offset + 26
-		} else {
-			ascii += offset
-		}
-	}
-
-	return rune(ascii)
+	return runeops.ReadAllRunes(r, w, func(r rune) (rune, error) {
+		return runeops.ShiftRune(r, -me.offset), nil
+	})
 }
