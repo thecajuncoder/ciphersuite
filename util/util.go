@@ -12,6 +12,7 @@ import (
 	"github.com/thecajuncoder/ciphersuite/cipher/vigenere"
 )
 
+// validCipherTypes this is a lookup of the different supported ciphers for this tool
 var validCipherTypes = map[string]reflect.Type{
 	"caesar":   reflect.TypeOf(caesar.Cipher{}),
 	"vigenere": reflect.TypeOf(vigenere.Cipher{}),

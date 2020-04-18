@@ -44,6 +44,7 @@ func (me *Cipher) SetKey(key cipher.Key) error {
 		return errors.New("Invalid key. Must contain at least 1 letter")
 	}
 
+	me.key = str
 	return nil
 }
 
