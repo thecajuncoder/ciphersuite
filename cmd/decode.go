@@ -4,7 +4,7 @@ Copyright © 2020 LA Cajun Coder
 package cmd
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -12,28 +12,40 @@ import (
 // decodeCmd represents the decode command
 var decodeCmd = &cobra.Command{
 	Use:   "decode",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("decode called")
-	},
+	Short: "Decode a message that has been encoded using a cipher",
+	Long: `Decode a message that has been encoded using a cipher. 
+The message can be read from a file or, if no file is provided, from STDIN.
+Similarly, the decoded message will be written to a file or STDOUT if no output file is specified`,
+	Run: runDecodeCommand,
 }
 
 func init() {
 	rootCmd.AddCommand(decodeCmd)
 
-	// Here you will define your flags and configuration settings.
+	decodeCmd.Flags().StringVarP(&cipherName, "cipher", "c", "", "The name of the cipher to use")
+	decodeCmd.Flags().StringVarP(&inputFile, "input", "i", "", "The file whose contents will be encoded")
+	decodeCmd.Flags().StringVarP(&outputFile, "output", "o", "", "The file to write the encoded message into")
+	decodeCmd.Flags().StringVarP(&cipherKeyStr, "key", "k", "", "The key to use for the specified cipher")
+	decodeCmd.Flags().StringVarP(&cipherKeyFile, "keyfile", "x", "", "A file containing the key to use for the specified cipher")
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// decodeCmd.PersistentFlags().String("foo", "", "A help for foo")
+	decodeCmd.MarkFlagRequired("cipher")
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// decodeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+// runDecodeCommand the "main" method for the "decode" sub-command of the cipher suite CLI
+func runDecodeCommand(cmd *cobra.Command, args []string) {
+
+	input, output, cipher, err := checkAndProcessParameters()
+
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+
+	defer input.Close()
+	defer output.Close()
+
+	_, err = cipher.Decode(input, output)
+
+	if err != nil {
+		log.Fatalf("Error decoding message: '%s'\n", err.Error())
+	}
 }

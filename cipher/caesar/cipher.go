@@ -73,7 +73,7 @@ func (me *Cipher) Decode(r io.Reader, w io.Writer) (int, error) {
 	var sz int
 	var err error
 
-	for c, sz, err = br.ReadRune(); err != nil; c, sz, err = br.ReadRune() {
+	for c, sz, err = br.ReadRune(); err == nil; c, sz, err = br.ReadRune() {
 
 		bytesRead += sz
 
