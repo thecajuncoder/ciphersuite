@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/thecajuncoder/ciphersuite/cipher"
+	"github.com/thecajuncoder/ciphersuite/util"
 )
 
 // encodeCmd represents the encode command
@@ -36,6 +37,7 @@ func init() {
 // runEncodeCommand the "main" method for the "encode" sub-command of the cipher suite CLI
 func runEncodeCommand(cmd *cobra.Command, args []string) {
 
+	// Parse the cipher key or cipher key file parameters
 	if cipherKeyStr == "" && cipherKeyFile == "" {
 		log.Fatalln("Must specify either a Cipher key or key file")
 	} else if cipherKeyStr == "" {
@@ -47,5 +49,34 @@ func runEncodeCommand(cmd *cobra.Command, args []string) {
 		cipherKey = k
 	} else {
 		cipherKey = cipher.Key(cipherKeyStr)
+	}
+
+	input, err := util.GetInputReader(inputFile)
+
+	if err != nil {
+		log.Fatalf("Unable to open input file '%s': %s\n", inputFile, err.Error())
+	}
+
+	defer input.Close()
+
+	output, err := util.GetOutputWriter(outputFile)
+
+	if err != nil {
+		log.Fatalf("Unable to open output file '%s': %s\n", outputFile, err.Error())
+	}
+
+	defer output.Close()
+
+	cipher := util.GetCipherFromName(cipherName)
+
+	if cipher == nil {
+		log.Fatalf("Cipher '%s' is not a valid Cipher\n", cipherName)
+	}
+
+	cipher.SetKey(cipherKey)
+	_, err = cipher.Encode(input, output)
+
+	if err != nil {
+		log.Fatalf("Error encoding message: '%s'\n", err.Error())
 	}
 }

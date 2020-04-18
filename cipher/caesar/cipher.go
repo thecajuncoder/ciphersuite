@@ -37,9 +37,14 @@ func (me *Cipher) Encode(r io.Reader, w io.Writer) (int, error) {
 	br := bufio.NewReader(r)
 	bw := bufio.NewWriter(w)
 
-	bytesRead := 0
+	defer bw.Flush()
 
-	for c, sz, err := br.ReadRune(); err != nil; c, sz, err = br.ReadRune() {
+	bytesRead := 0
+	var c rune
+	var sz int
+	var err error
+
+	for c, sz, err = br.ReadRune(); err == nil; c, sz, err = br.ReadRune() {
 
 		bytesRead += sz
 
@@ -47,7 +52,10 @@ func (me *Cipher) Encode(r io.Reader, w io.Writer) (int, error) {
 		bw.WriteRune(shiftRune(c, me.offset))
 	}
 
-	return bytesRead, nil
+	if err == io.EOF {
+		return bytesRead, nil
+	}
+	return bytesRead, err
 }
 
 // Decode decode the contents of the incoming reader stream
@@ -58,9 +66,14 @@ func (me *Cipher) Decode(r io.Reader, w io.Writer) (int, error) {
 	br := bufio.NewReader(r)
 	bw := bufio.NewWriter(w)
 
-	bytesRead := 0
+	defer bw.Flush()
 
-	for c, sz, err := br.ReadRune(); err != nil; c, sz, err = br.ReadRune() {
+	bytesRead := 0
+	var c rune
+	var sz int
+	var err error
+
+	for c, sz, err = br.ReadRune(); err != nil; c, sz, err = br.ReadRune() {
 
 		bytesRead += sz
 
@@ -68,13 +81,17 @@ func (me *Cipher) Decode(r io.Reader, w io.Writer) (int, error) {
 		bw.WriteRune(shiftRune(c, -me.offset))
 	}
 
-	return bytesRead, nil
+	if err == io.EOF {
+		return bytesRead, nil
+	}
+	return bytesRead, err
 }
 
 // shiftRune performs the "shift" for any English letters based on the provided offset
 // Letters that "overflow" when shifted are wrapped around to the other side of the alphabet
 func shiftRune(r rune, offset int) rune {
 
+	offset %= 26
 	ascii := int(r)
 
 	// Check only for capital or lowercase English letters (A - Z)

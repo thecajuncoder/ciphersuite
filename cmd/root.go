@@ -28,7 +28,6 @@ var cipherKeyFile string
 var rootCmd = &cobra.Command{
 	Use:   "ciphersuite",
 	Short: "A CLI suite of tools for encoding, decoding, and cracking messages using ciphers",
-	Long:  ``,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
